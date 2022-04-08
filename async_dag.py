@@ -1,6 +1,6 @@
 from datetime import datetime
 from airflow import DAG
-from airflow.sensors.date_time import DateTimeSensorAsync
+from fmr.pi.fili.airflow.sensors.ctm import CtmConditionSensorAsync
  
 with DAG(
    "async_dag",
@@ -12,7 +12,7 @@ with DAG(
    max_active_tasks=32
 ) as dag:
  
-   async_sensor = DateTimeSensorAsync(
+   async_sensor = CtmConditionSensorAsync(
        task_id="async_task",
        target_time="""{{ macros.datetime.utcnow() + macros.timedelta(minutes=20) }}""",
    )
