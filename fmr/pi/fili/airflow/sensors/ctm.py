@@ -16,12 +16,10 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import datetime
-from typing import Sequence, Union
+from typing import Sequence
 
 from airflow.sensors.base import BaseSensorOperator
 from fmr.pi.fili.airflow.triggers.ctm import CtmConditionTrigger
-from airflow.utils import timezone
 from airflow.utils.context import Context
 
 
@@ -35,24 +33,22 @@ class CtmConditionSensorAsync(BaseSensorOperator):
     :param target_time: datetime after which the job succeeds. (templated)
     """
 
-    template_fields: Sequence[str] = ("target_time",)
+    template_fields: Sequence[str] = ("event_name",)
 
-    def __init__(self, *, target_time: Union[str, datetime.datetime], **kwargs) -> None:
+    def __init__(self, *, event_name: str, **kwargs) -> None:
         super().__init__(**kwargs)
 
         # self.target_time can't be a datetime object as it is a template_field
-        if isinstance(target_time, datetime.datetime):
-            self.target_time = target_time.isoformat()
-        elif isinstance(target_time, str):
-            self.target_time = target_time
+        if isinstance(event_name, str):
+            self.event_name = event_name
         else:
             raise TypeError(
-                f"Expected str or datetime.datetime type for target_time. Got {type(target_time)}"
+                f"Expected str type for target_time. Got {type(event_name)}"
             )
 
     def execute(self, context: Context):
         self.defer(
-            trigger=CtmConditionTrigger(moment=timezone.parse(self.target_time)),
+            trigger=CtmConditionTrigger(event_name=self.event_name),
             method_name="execute_complete",
         )
 

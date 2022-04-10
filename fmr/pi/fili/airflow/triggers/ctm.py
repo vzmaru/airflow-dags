@@ -21,6 +21,8 @@ from typing import Any, Dict, Tuple
 
 from airflow.triggers.base import BaseTrigger, TriggerEvent
 from airflow.utils import timezone
+from airflow.providers.http.hooks.http import HttpHook
+from airflow.exceptions import AirflowException
 
 
 class CtmConditionTrigger(BaseTrigger):
@@ -31,20 +33,17 @@ class CtmConditionTrigger(BaseTrigger):
     The provided datetime MUST be in UTC.
     """
 
-    def __init__(self, moment: datetime.datetime):
+    def __init__(self, event_name: str):
         super().__init__()
-        if not isinstance(moment, datetime.datetime):
-            raise TypeError(f"Expected datetime.datetime type for moment. Got {type(moment)}")
+        if not isinstance(event_name, str):
+            raise TypeError(f"Expected str type for event_name. Got {type(event_name)}")
         # Make sure it's in UTC
-        elif moment.tzinfo is None:
-            raise ValueError("You cannot pass naive datetimes")
-        elif not hasattr(moment.tzinfo, "offset") or moment.tzinfo.offset != 0:  # type: ignore
-            raise ValueError(f"The passed datetime must be using Pendulum's UTC, not {moment.tzinfo!r}")
         else:
-            self.moment = moment
+            self.event_name = event_name
+        self.hook = HttpHook(method="GET", http_conn_id="ctm")
 
     def serialize(self) -> Tuple[str, Dict[str, Any]]:
-        return ("fmr.pi.fili.airflow.triggers.ctm.CtmConditionTrigger", {"moment": self.moment})
+        return ("fmr.pi.fili.airflow.triggers.ctm.CtmConditionTrigger", {"event_name": self.event_name})
 
     async def run(self):
         """
@@ -55,12 +54,21 @@ class CtmConditionTrigger(BaseTrigger):
         "the number of seconds until the time" in case the system clock changes
         unexpectedly, or handles a DST change poorly.
         """
-        # Sleep an hour at a time while it's more than 2 hours away
-        while (self.moment - timezone.utcnow()).total_seconds() > 2 * 3600:
-            await asyncio.sleep(3600)
-        # Sleep a second at a time otherwise
-        while self.moment > timezone.utcnow():
-            await asyncio.sleep(1)
-        # Send our single event and then we're done
-        yield TriggerEvent(self.moment)
+        while True:
+            try:
+                response = self.hook.run(
+                    "run/events/"+self.event_name,
+                )
+
+                if len(response.json()) > 0:
+                    break
+                else:
+                    await asyncio.sleep(15)
+            except AirflowException as exc:
+                if str(exc).startswith("404"):
+                    return False
+
+                raise exc
+
+        yield TriggerEvent(self.event_name)
 
