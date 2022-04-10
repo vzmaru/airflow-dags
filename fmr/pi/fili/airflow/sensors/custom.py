@@ -20,17 +20,17 @@ import datetime
 from typing import Sequence, Union
 
 from airflow.sensors.base import BaseSensorOperator
-from fmr.pi.fili.airflow.triggers.ctm import CtmConditionTrigger
+from fmr.pi.fili.airflow.triggers.custom import MyCustomTrigger
 from airflow.utils import timezone
 from airflow.utils.context import Context
 
 
-class CtmConditionSensorAsync(BaseSensorOperator):
+class MyCustomSensorAsync(BaseSensorOperator):
     """
     Waits until the specified datetime, deferring itself to avoid taking up
     a worker slot while it is waiting.
 
-    It is a drop-in replacement for CtmConditionSensor.
+    It is a drop-in replacement for DateTimeSensor.
 
     :param target_time: datetime after which the job succeeds. (templated)
     """
@@ -52,7 +52,7 @@ class CtmConditionSensorAsync(BaseSensorOperator):
 
     def execute(self, context: Context):
         self.defer(
-            trigger=CtmConditionTrigger(moment=timezone.parse(self.target_time)),
+            trigger=MyCustomTrigger(moment=timezone.parse(self.target_time)),
             method_name="execute_complete",
         )
 
