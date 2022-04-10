@@ -65,8 +65,6 @@ class CtmConditionTrigger(BaseTrigger):
                 else:
                     await asyncio.sleep(15)
             except AirflowException as exc:
-                if str(exc).startswith("404"):
-                    return False
 
                 raise exc
 
