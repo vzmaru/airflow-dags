@@ -65,7 +65,6 @@ class CtmConditionTrigger(BaseTrigger):
                 else:
                     await asyncio.sleep(15)
             except AirflowException as exc:
-
                 raise exc
 
         yield TriggerEvent(self.event_name)

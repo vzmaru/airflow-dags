@@ -5,8 +5,8 @@ from fmr.pi.fili.airflow.sensors.custom import MyCustomSensorAsync
 
 with DAG(
    "ctm_dag",
-   start_date=datetime(2021, 12, 22, 0, 0),
-   end_date=datetime(2021, 12, 22, 23, 59),
+   start_date=datetime(2022, 4, 10, 0, 0),
+   end_date=datetime(2022, 5, 31, 23, 59),
    schedule_interval="0 12 * * *",
    catchup=True,
    max_active_runs=32,
