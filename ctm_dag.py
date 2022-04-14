@@ -13,14 +13,14 @@ with DAG(
    max_active_tasks=32
 ) as dag:
 
-    ctm_task_1 = CtmConditionSensorAsync(
+    ctm_task_1 = MyCustomSensorAsync(
         task_id="ctm_task_1",
-        event_name="x",
-    )
-
-    ctm_task_2 = MyCustomSensorAsync(
-        task_id="ctm_task_2",
         target_time="""{{ macros.datetime.utcnow() + macros.timedelta(minutes=1) }}""",
     )
 
-    ctm_task_2 >> ctm_task_1
+    ctm_task_2 = CtmConditionSensorAsync(
+        task_id="ctm_task_2",
+        event_name="x",
+    )
+
+    ctm_task_1 >> ctm_task_2
